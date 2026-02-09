@@ -1,6 +1,31 @@
 # URL Shortener - Lambda Serverless
 
-Aplicação serverless simples que encurta URLs usando AWS Lambda, API Gateway e DynamoDB.
+Aplicação serverless que encurta URLs usando AWS Lambda, API Gateway e DynamoDB.
+
+## 🎯 Para que serve
+
+Esta aplicação demonstra um caso de uso real de AWS Lambda:
+- **Encurta URLs longas** em IDs de 6 caracteres (ex: `c14be8`)
+- **Redireciona automaticamente** quando alguém acessa o link curto
+- **Expira URLs antigas** após 30 dias usando TTL do DynamoDB
+- **Escalável e sem servidor** - você só paga pelo que usar
+
+## 🏗️ Como foi criada
+
+A infraestrutura foi provisionada com **Terraform** e inclui:
+
+- **AWS Lambda** (Python 3.12) - Processa requisições de encurtamento e redirecionamento
+- **API Gateway HTTP** - Expõe 2 endpoints públicos:
+  - `POST /shorten` - Encurta uma URL
+  - `GET /{short_id}` - Redireciona para URL original
+- **DynamoDB** - Armazena mapeamento de IDs curtos para URLs originais
+- **IAM Role** - Permissões para Lambda acessar DynamoDB e CloudWatch Logs
+
+Todos os recursos são **automaticamente tagueados** com:
+- `Project: url-shortener`
+- `Environment: dev`
+- `ManagedBy: terraform`
+- `Owner: bruno`
 
 ## 💰 Custos
 
@@ -8,8 +33,6 @@ Aplicação serverless simples que encurta URLs usando AWS Lambda, API Gateway e
 - Lambda: 1M requisições/mês grátis
 - DynamoDB: 25GB armazenamento + 25 unidades de leitura/escrita grátis
 - API Gateway: 1M chamadas/mês grátis (primeiros 12 meses)
-
-URLs expiram automaticamente após 30 dias (TTL do DynamoDB).
 
 ## 🚀 Deploy
 
@@ -19,7 +42,7 @@ cd lambda
 zip -r ../lambda.zip index.py
 cd ..
 
-# 2. Deploy com Terraform
+# 2. Deploy com Terraform (usando perfil Master)
 terraform init
 terraform plan
 terraform apply
@@ -36,25 +59,28 @@ curl -X POST https://SEU-API-ENDPOINT/shorten \
   -H "Content-Type: application/json" \
   -d '{"url": "https://aws.amazon.com/lambda"}'
 
-# Resposta: {"short_id": "a1b2c3", "expires_in_days": 30}
+# Resposta: {"short_id": "c14be8", "expires_in_days": 30}
 ```
 
 **Acessar URL encurtada:**
 ```bash
-curl -L https://SEU-API-ENDPOINT/a1b2c3
+curl -L https://SEU-API-ENDPOINT/c14be8
 # Redireciona para URL original
 ```
 
-## 🧹 Limpar recursos
+## 🗑️ Como destruir
+
+Para remover **todos os recursos** da AWS e evitar custos:
 
 ```bash
 terraform destroy
 ```
 
-## 🏷️ Tags
+Confirme com `yes` quando solicitado. Isso irá deletar:
+- Lambda Function
+- API Gateway
+- DynamoDB Table
+- IAM Role e Policies
+- CloudWatch Logs
 
-Todos os recursos são automaticamente tagueados com:
-- Project: url-shortener
-- Environment: dev
-- ManagedBy: terraform
-- Owner: bruno
+**Importante:** Após destruir, os links encurtados param de funcionar imediatamente.
